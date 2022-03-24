@@ -248,11 +248,14 @@ public class RNJWPlayerView extends RelativeLayout implements
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        destroyPlayer();
+        mPlayer.pauseAd(true);
+        Log("onDetachedFromWindow called")
     }
 
     public void destroyPlayer() {
         if (mPlayerView != null) {
+            Log("destroyPlayer called")
+            mPlayer.pauseAd(true);
             mPlayer.stop();
 
             mPlayer.removeListeners(this,
