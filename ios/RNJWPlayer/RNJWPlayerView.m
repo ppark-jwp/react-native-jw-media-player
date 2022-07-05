@@ -3,6 +3,8 @@
 #import <AVKit/AVKit.h>
 #import <MediaPlayer/MediaPlayer.h>
 #import "RCTConvert+RNJWPlayer.h"
+#import <React/RCTLog.h>
+
 
 @implementation RNJWPlayerView
 
@@ -826,6 +828,7 @@
 }
 
 - (void)jwplayer:(id<JWPlayer> _Nonnull)player encounteredAdError:(NSUInteger)code message:(NSString * _Nonnull)message {
+    RCTLog(@">>> Error: AdError %@", message);
     if (self.onPlayerAdError) {
         self.onPlayerAdError(@{@"error": message});
     }
@@ -833,6 +836,7 @@
 
 
 - (void)jwplayer:(id<JWPlayer> _Nonnull)player encounteredAdWarning:(NSUInteger)code message:(NSString * _Nonnull)message {
+    RCTLog(@">>> Warn: AdWarning %@", message);
     if (self.onPlayerAdWarning) {
         self.onPlayerAdWarning(@{@"warning": message});
     }
@@ -1273,6 +1277,7 @@
 #pragma mark - JWPlayer Ad Delegate
 
 - (void)jwplayer:(id _Nonnull)player adEvent:(JWAdEvent * _Nonnull)event {
+    RCTLog(@">>> AdEvent type=%@", @(event.type));
     if (self.onAdEvent) {
         self.onAdEvent(@{@"client": @(event.client), @"type": @(event.type)});
     }
