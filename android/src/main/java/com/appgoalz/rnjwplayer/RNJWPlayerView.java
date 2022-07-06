@@ -103,6 +103,7 @@ public class RNJWPlayerView extends RelativeLayout implements
         VideoPlayerEvents.OnErrorListener,
         VideoPlayerEvents.OnSetupErrorListener,
         VideoPlayerEvents.OnBufferListener,
+        VideoPlayerEvents.OnBufferChangeListener,
         VideoPlayerEvents.OnTimeListener,
         VideoPlayerEvents.OnPlaylistListener,
         VideoPlayerEvents.OnPlaylistItemListener,
@@ -247,12 +248,12 @@ public class RNJWPlayerView extends RelativeLayout implements
         return (Activity) getContext();
     }
 
-    @Override
-    protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
-        mPlayer.pauseAd(true);
-        Log.d(TAG, "onDetachedFromWindow called");
-    }
+//     @Override
+//     protected void onDetachedFromWindow() {
+//         super.onDetachedFromWindow();
+//         mPlayer.pauseAd(true);
+//         Log.d(TAG, "onDetachedFromWindow called");
+//     }
 
     public void destroyPlayer() {
         if (mPlayerView != null) {
@@ -879,6 +880,15 @@ public class RNJWPlayerView extends RelativeLayout implements
         WritableMap event = Arguments.createMap();
         event.putString("message", "onBuffer");
         getReactContext().getJSModule(RCTEventEmitter.class).receiveEvent(getId(), "topBuffer", event);
+
+        updateWakeLock(true);
+    }
+
+     @Override
+    public void onBufferChange(BufferChangeEvent bufferChangeEvent) {
+        WritableMap event = Arguments.createMap();
+        event.putString("message", "onBufferChange");
+        getReactContext().getJSModule(RCTEventEmitter.class).receiveEvent(getId(), "topBufferChange", event);
 
         updateWakeLock(true);
     }
