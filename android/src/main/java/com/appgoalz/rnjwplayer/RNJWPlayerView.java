@@ -295,8 +295,11 @@ public class RNJWPlayerView extends RelativeLayout implements
                     EventType.PIP_CLOSE,
                     EventType.PIP_OPEN
             );
+            mPlayer.removeAllListeners(this);
+            mPlayer.removePlaylistItemCallbackListener();
 
             mPlayerView = null;
+            mPlayer = null;
 
             getReactContext().removeLifecycleEventListener(this);
 
