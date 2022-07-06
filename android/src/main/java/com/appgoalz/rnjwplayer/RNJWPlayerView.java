@@ -103,7 +103,7 @@ public class RNJWPlayerView extends RelativeLayout implements
         VideoPlayerEvents.OnErrorListener,
         VideoPlayerEvents.OnSetupErrorListener,
         VideoPlayerEvents.OnBufferListener,
-        VideoPlayerEvents.OnBufferChangeListener,
+//         VideoPlayerEvents.OnBufferChangeListener,
         VideoPlayerEvents.OnTimeListener,
         VideoPlayerEvents.OnPlaylistListener,
         VideoPlayerEvents.OnPlaylistItemListener,
@@ -290,13 +290,17 @@ public class RNJWPlayerView extends RelativeLayout implements
                     EventType.BEFORE_COMPLETE,
                     EventType.AD_PLAY,
                     EventType.AD_PAUSE,
+                    EventType.AD_STARTED,
+                    EventType.AD_COMPLETE,
+                    EventType.AD_BREAK_START,
+                    EventType.AD_BREAK_END,
                     // Cast event
                     EventType.CAST,
                     // Pip events
                     EventType.PIP_CLOSE,
                     EventType.PIP_OPEN
             );
-            mPlayer.removeAllListeners(this);
+//             mPlayer.removeAllListeners(this);
             mPlayer.removePlaylistItemCallbackListener();
 
             mPlayerView = null;
@@ -884,14 +888,14 @@ public class RNJWPlayerView extends RelativeLayout implements
         updateWakeLock(true);
     }
 
-     @Override
-    public void onBufferChange(BufferChangeEvent bufferChangeEvent) {
-        WritableMap event = Arguments.createMap();
-        event.putString("message", "onBufferChange");
-        getReactContext().getJSModule(RCTEventEmitter.class).receiveEvent(getId(), "topBufferChange", event);
-
-        updateWakeLock(true);
-    }
+//      @Override
+//     public void onBufferChange(BufferChangeEvent bufferChangeEvent) {
+//         WritableMap event = Arguments.createMap();
+//         event.putString("message", "onBufferChange");
+//         getReactContext().getJSModule(RCTEventEmitter.class).receiveEvent(getId(), "topBufferChange", event);
+//
+//         updateWakeLock(true);
+//     }
 
     @Override
     public void onComplete(CompleteEvent completeEvent) {
