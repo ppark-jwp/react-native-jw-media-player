@@ -290,10 +290,10 @@ public class RNJWPlayerView extends RelativeLayout implements
                     EventType.BEFORE_COMPLETE,
                     EventType.AD_PLAY,
                     EventType.AD_PAUSE,
-                    EventType.AD_STARTED,
-                    EventType.AD_COMPLETE,
-                    EventType.AD_BREAK_START,
-                    EventType.AD_BREAK_END,
+//                     EventType.AD_STARTED,
+//                     EventType.AD_COMPLETE,
+//                     EventType.AD_BREAK_START,
+//                     EventType.AD_BREAK_END,
                     // Cast event
                     EventType.CAST,
                     // Pip events
