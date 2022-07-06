@@ -6,6 +6,7 @@
 //
 
 #import "RNJWPlayerViewController.h"
+#import <React/RCTLog.h>
 
 @implementation RNJWPlayerViewController
 
@@ -51,6 +52,7 @@
 }
 
 - (void)jwplayer:(id<JWPlayer> _Nonnull)player encounteredAdError:(NSUInteger)code message:(NSString * _Nonnull)message {
+     RCTLog(@">>> Error: AdError %@", message);
     if (_parentView.onPlayerAdError) {
         _parentView.onPlayerAdError(@{@"error": message});
     }
@@ -58,6 +60,7 @@
 
 
 - (void)jwplayer:(id<JWPlayer> _Nonnull)player encounteredAdWarning:(NSUInteger)code message:(NSString * _Nonnull)message {
+    RCTLog(@">>> Warn: AdWarning %@", message);
     if (_parentView.onPlayerAdWarning) {
         _parentView.onPlayerAdWarning(@{@"warning": message});
     }
@@ -72,15 +75,15 @@
         NSMutableDictionary* oldSizeDict = [[NSMutableDictionary alloc] init];
         [oldSizeDict setObject:[NSNumber numberWithFloat: oldSize.width] forKey:@"width"];
         [oldSizeDict setObject:[NSNumber numberWithFloat: oldSize.height] forKey:@"height"];
-        
+
         NSMutableDictionary* newSizeDict = [[NSMutableDictionary alloc] init];
         [newSizeDict setObject:[NSNumber numberWithFloat: newSize.width] forKey:@"width"];
         [newSizeDict setObject:[NSNumber numberWithFloat: newSize.height] forKey:@"height"];
-        
+
         NSMutableDictionary* sizesDict = [[NSMutableDictionary alloc] init];
         [sizesDict setObject:oldSizeDict forKey:@"oldSize"];
         [sizesDict setObject:newSizeDict forKey:@"newSize"];
-        
+
         NSError* error = nil;
         NSData* data = [NSJSONSerialization dataWithJSONObject:sizesDict options:NSJSONWritingPrettyPrinted error: &error];
         _parentView.onPlayerSizeChange(@{@"sizes": data});
@@ -95,15 +98,15 @@
         NSMutableDictionary* oldSizeDict = [[NSMutableDictionary alloc] init];
         [oldSizeDict setObject:[NSNumber numberWithFloat: oldSize.width] forKey:@"width"];
         [oldSizeDict setObject:[NSNumber numberWithFloat: oldSize.height] forKey:@"height"];
-        
+
         NSMutableDictionary* newSizeDict = [[NSMutableDictionary alloc] init];
         [newSizeDict setObject:[NSNumber numberWithFloat: newSize.width] forKey:@"width"];
         [newSizeDict setObject:[NSNumber numberWithFloat: newSize.height] forKey:@"height"];
-        
+
         NSMutableDictionary* sizesDict = [[NSMutableDictionary alloc] init];
         [sizesDict setObject:oldSizeDict forKey:@"oldSize"];
         [sizesDict setObject:newSizeDict forKey:@"newSize"];
-        
+
         NSError* error = nil;
         NSData* data = [NSJSONSerialization dataWithJSONObject:sizesDict options:NSJSONWritingPrettyPrinted error: &error];
         _parentView.onPlayerSizeChange(@{@"sizes": data});
@@ -154,17 +157,17 @@
 
 - (void)playerViewController:(JWPlayerViewController *)controller relatedMenuClosedWithMethod:(enum JWRelatedInteraction)method
 {
-    
+
 }
 
 - (void)playerViewController:(JWPlayerViewController *)controller relatedMenuOpenedWithItems:(NSArray<JWPlayerItem *> *)items withMethod:(enum JWRelatedInteraction)method
 {
-    
+
 }
 
 - (void)playerViewController:(JWPlayerViewController *)controller relatedItemBeganPlaying:(JWPlayerItem *)item atIndex:(NSInteger)index withMethod:(enum JWRelatedInteraction)method
 {
-    
+
 }
 
 #pragma mark Time events
@@ -189,7 +192,7 @@
     if (!_parentView.contentUUID) {
         _parentView.contentUUID = [[url.absoluteString componentsSeparatedByString:@";"] lastObject];
     }
-    
+
     NSData *uuidData = [_parentView.contentUUID dataUsingEncoding:NSUTF8StringEncoding];
     handler(uuidData);
 }
@@ -207,14 +210,14 @@
     [ckcRequest setHTTPMethod:@"POST"];
     [ckcRequest setHTTPBody:spcData];
     [ckcRequest addValue:@"application/octet-stream" forHTTPHeaderField:@"Content-Type"];
-    
+
     [[[NSURLSession sharedSession] dataTaskWithRequest:ckcRequest completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
         NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
         if (error != nil || (httpResponse != nil && !NSLocationInRange(httpResponse.statusCode , NSMakeRange(200, (299 - 200))))) {
             handler(nil, nil, nil);
             return;
         }
- 
+
         handler(data, nil, nil);
     }] resume];
 }
@@ -230,32 +233,32 @@
 
 - (void)pictureInPictureControllerDidStopPictureInPicture:(AVPictureInPictureController *)pictureInPictureController
 {
-    
+
 }
 
 - (void)pictureInPictureControllerDidStartPictureInPicture:(AVPictureInPictureController *)pictureInPictureController
 {
-    
+
 }
 
 - (void)pictureInPictureControllerWillStopPictureInPicture:(AVPictureInPictureController *)pictureInPictureController
 {
-    
+
 }
 
 - (void)pictureInPictureController:(AVPictureInPictureController *)pictureInPictureController failedToStartPictureInPictureWithError:(NSError *)error
 {
-    
+
 }
 
 - (void)pictureInPictureControllerWillStartPictureInPicture:(AVPictureInPictureController *)pictureInPictureController
 {
-    
+
 }
 
 - (void)pictureInPictureController:(AVPictureInPictureController *)pictureInPictureController restoreUserInterfaceForPictureInPictureStopWithCompletionHandler:(void (^)(BOOL))completionHandler
 {
-    
+
 }
 
 #pragma mark - JWPlayer State Delegate
@@ -300,7 +303,7 @@
     if (_parentView.onPlay) {
         _parentView.onPlay(@{});
     }
-    
+
     _parentView.userPaused = NO;
     _parentView.wasInterrupted = NO;
 }
@@ -317,7 +320,7 @@
     if (_parentView.onPause) {
         _parentView.onPause(@{});
     }
-    
+
     if (!_parentView.wasInterrupted) {
         _parentView.userPaused = YES;
     }
@@ -360,21 +363,21 @@
             [sourceDict setObject:source.label forKey:@"label"];
             [sourceDict setObject:@(source.defaultVideo) forKey:@"default"];
         }
-        
+
         NSMutableDictionary* schedDict = [[NSMutableDictionary alloc] init];
         for (JWAdBreak* sched in item.adSchedule) {
             [schedDict setObject:sched.offset forKey:@"offset"];
             [schedDict setObject:sched.tags forKey:@"tags"];
             [schedDict setObject:@(sched.type) forKey:@"type"];
         }
-        
+
         NSMutableDictionary* trackDict = [[NSMutableDictionary alloc] init];
         for (JWMediaTrack* track in item.mediaTracks) {
             [trackDict setObject:track.file forKey:@"file"];
             [trackDict setObject:track.label forKey:@"label"];
             [trackDict setObject:@(track.defaultTrack) forKey:@"default"];
         }
-        
+
         NSDictionary* itemDict = [NSDictionary dictionaryWithObjectsAndKeys:
                                   item.mediaId, @"mediaId",
                                   item.title, @"title",
@@ -390,10 +393,10 @@
 
         NSError *error;
         NSData *data = [NSJSONSerialization dataWithJSONObject:itemDict options:NSJSONWritingPrettyPrinted error: &error];
-        
+
         _parentView.onPlaylistItem(@{@"playlistItem": [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding], @"index": [NSNumber numberWithInteger:index]});
     }
-    
+
     [item addObserver:self forKeyPath:@"playbackLikelyToKeepUp" options:NSKeyValueObservingOptionNew context:nil];
 }
 
@@ -401,7 +404,7 @@
 {
     if (_parentView.onPlaylist) {
         NSMutableArray* playlistArray = [[NSMutableArray alloc] init];
-        
+
         for (JWPlayerItem* item in playlist) {
             NSMutableDictionary* sourceDict = [[NSMutableDictionary alloc] init];
             for (JWVideoSource* source in item.videoSources) {
@@ -409,21 +412,21 @@
                 [sourceDict setObject:source.label forKey:@"label"];
                 [sourceDict setObject:@(source.defaultVideo) forKey:@"default"];
             }
-            
+
             NSMutableDictionary* schedDict = [[NSMutableDictionary alloc] init];
             for (JWAdBreak* sched in item.adSchedule) {
                 [schedDict setObject:sched.offset forKey:@"offset"];
                 [schedDict setObject:sched.tags forKey:@"tags"];
                 [schedDict setObject:@(sched.type) forKey:@"type"];
             }
-            
+
             NSMutableDictionary* trackDict = [[NSMutableDictionary alloc] init];
             for (JWMediaTrack* track in item.mediaTracks) {
                 [trackDict setObject:track.file forKey:@"file"];
                 [trackDict setObject:track.label forKey:@"label"];
                 [trackDict setObject:@(track.defaultTrack) forKey:@"default"];
             }
-            
+
             NSDictionary* itemDict = [NSDictionary dictionaryWithObjectsAndKeys:
                                       item.mediaId, @"mediaId",
                                       item.title, @"title",
@@ -436,13 +439,13 @@
                                       schedDict, @"adSchedule",
                                       trackDict, @"tracks",
                                       nil];
-            
+
             [playlistArray addObject:itemDict];
         }
-        
+
         NSError *error;
         NSData* data = [NSJSONSerialization dataWithJSONObject:playlistArray options:NSJSONWritingPrettyPrinted error: &error];
-        
+
         _parentView.onPlaylist(@{@"playlist": [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]});
     }
 }
@@ -475,17 +478,18 @@
 
 - (void)jwplayer:(id<JWPlayer>)player playbackRateChangedTo:(double)rate at:(NSTimeInterval)time
 {
-    
+
 }
 
 - (void)jwplayer:(id<JWPlayer>)player updatedCues:(NSArray<JWCue *> * _Nonnull)cues
 {
-    
+
 }
 
 #pragma mark - JWPlayer Ad Delegate
 
 - (void)jwplayer:(id _Nonnull)player adEvent:(JWAdEvent * _Nonnull)event {
+    RCTLog(@">>> AdEvent type=%@", @(event.type));
     if (_parentView.onAdEvent) {
         _parentView.onAdEvent(@{@"client": @(event.client), @"type": @(event.type)});
     }
@@ -514,13 +518,13 @@
 - (void)castController:(JWCastController * _Nonnull)controller connectedTo:(JWCastingDevice * _Nonnull)device {
     if (_parentView.onConnectedToCastingDevice) {
         NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
-            
+
         [dict setObject:device.name forKey:@"name"];
         [dict setObject:device.identifier forKey:@"identifier"];
 
         NSError *error;
         NSData *data = [NSJSONSerialization dataWithJSONObject:dict options:NSJSONWritingPrettyPrinted error: &error];
-        
+
         _parentView.onConnectedToCastingDevice(@{@"device": [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]});
     }
 }
@@ -545,13 +549,13 @@
 
 - (void)castController:(JWCastController * _Nonnull)controller devicesAvailable:(NSArray<JWCastingDevice *> * _Nonnull)devices {
     _parentView.availableDevices = devices;
-    
+
     if (_parentView.onCastingDevicesAvailable) {
         NSMutableArray *devicesInfo = [[NSMutableArray alloc] init];
 
         for (JWCastingDevice *device in devices) {
             NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
-                
+
             [dict setObject:device.name forKey:@"name"];
             [dict setObject:device.identifier forKey:@"identifier"];
 
@@ -560,7 +564,7 @@
 
         NSError *error;
         NSData *data = [NSJSONSerialization dataWithJSONObject:devicesInfo options:NSJSONWritingPrettyPrinted error: &error];
-        
+
         _parentView.onCastingDevicesAvailable(@{@"devices": [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]});
     }
 }
@@ -580,27 +584,27 @@
 }
 
 - (void)jwplayer:(id<JWPlayer> _Nonnull)player audioTrackChanged:(NSInteger)currentLevel {
-    
+
 }
 
 - (void)jwplayer:(id<JWPlayer> _Nonnull)player captionPresented:(NSArray<NSString *> * _Nonnull)caption at:(JWTimeData * _Nonnull)time {
-    
+
 }
 
 - (void)jwplayer:(id<JWPlayer> _Nonnull)player captionTrackChanged:(NSInteger)index {
-    
+
 }
 
 - (void)jwplayer:(id<JWPlayer> _Nonnull)player qualityLevelChanged:(NSInteger)currentLevel {
-    
+
 }
 
 - (void)jwplayer:(id<JWPlayer> _Nonnull)player qualityLevelsUpdated:(NSArray<JWVideoSource *> * _Nonnull)levels {
-    
+
 }
 
 - (void)jwplayer:(id<JWPlayer> _Nonnull)player updatedCaptionList:(NSArray<JWMediaSelectionOption *> * _Nonnull)options {
-    
+
 }
 
 @end

@@ -249,6 +249,7 @@ public class RNJWPlayerView extends RelativeLayout implements
 
     public void destroyPlayer() {
         if (mPlayerView != null) {
+            mPlayer.pauseAd(true);
             mPlayer.stop();
 
             mPlayer.removeListeners(this,
