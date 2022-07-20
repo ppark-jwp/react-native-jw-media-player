@@ -20,6 +20,11 @@
 }
 
 - (void)removeFromSuperview {
+    [self startDeinitProcess];
+}
+
+-(void)startDeinitProcess
+{
     @try {
         [[NSNotificationCenter defaultCenter] removeObserver:self name:UIDeviceOrientationDidChangeNotification object:nil];
     } @catch(id anException) {
@@ -700,6 +705,7 @@
         [_playerViewController.player pause]; // hack for stop not always stopping on unmount
         _playerViewController.enableLockScreenControls = NO;
         [_playerViewController.player stop];
+        _playerViewController.parentView = nil;
         [_playerViewController.view removeFromSuperview];
         [_playerViewController removeFromParentViewController];
         [_playerViewController willMoveToParentViewController:nil];
@@ -1146,10 +1152,16 @@
 {
     if (self.onPlaylistItem) {
         NSMutableDictionary* sourceDict = [[NSMutableDictionary alloc] init];
+        NSString *file;
+        
         for (JWVideoSource* source in item.videoSources) {
             [sourceDict setObject:source.file forKey:@"file"];
             [sourceDict setObject:source.label forKey:@"label"];
             [sourceDict setObject:@(source.defaultVideo) forKey:@"default"];
+            
+            if (source.defaultVideo) {
+                file = [source.file absoluteString];
+            }
         }
 
         NSMutableDictionary* schedDict = [[NSMutableDictionary alloc] init];
@@ -1167,6 +1179,7 @@
         }
 
         NSDictionary* itemDict = [NSDictionary dictionaryWithObjectsAndKeys:
+                                  file, @"file",
                                   item.mediaId, @"mediaId",
                                   item.title, @"title",
                                   item.description, @"description",
@@ -1194,11 +1207,17 @@
         NSMutableArray* playlistArray = [[NSMutableArray alloc] init];
 
         for (JWPlayerItem* item in playlist) {
+            NSString *file;
+            
             NSMutableDictionary* sourceDict = [[NSMutableDictionary alloc] init];
             for (JWVideoSource* source in item.videoSources) {
                 [sourceDict setObject:source.file forKey:@"file"];
                 [sourceDict setObject:source.label forKey:@"label"];
                 [sourceDict setObject:@(source.defaultVideo) forKey:@"default"];
+                
+                if (source.defaultVideo) {
+                    file = [source.file absoluteString];
+                }
             }
 
             NSMutableDictionary* schedDict = [[NSMutableDictionary alloc] init];
@@ -1216,6 +1235,7 @@
             }
 
             NSDictionary* itemDict = [NSDictionary dictionaryWithObjectsAndKeys:
+                                      file, @"file",
                                       item.mediaId, @"mediaId",
                                       item.title, @"title",
                                       item.description, @"description",
@@ -1669,9 +1689,9 @@
 // Hack for ios 14 stopping audio when going to background
 -(void)applicationWillResignActive:(NSNotification *)notification {
     if (!_userPaused && _backgroundAudioEnabled) {
-        if (_playerView) {
+        if (_playerView && [_playerView.player getState] == JWPlayerStatePlaying) {
             [_playerView.player play];
-        } else if (_playerViewController) {
+        } else if (_playerViewController && [_playerViewController.player getState] == JWPlayerStatePlaying) {
             [_playerViewController.player play];
         }
     }
@@ -1687,9 +1707,9 @@
 // Active
 -(void)applicationWillEnterForeground:(NSNotification *)notification{
     if (!_userPaused && _backgroundAudioEnabled) {
-        if (_playerView) {
+        if (_playerView && [_playerView.player getState] == JWPlayerStatePlaying) {
             [_playerView.player play];
-        } else if (_playerViewController) {
+        } else if (_playerViewController && [_playerViewController.player getState] == JWPlayerStatePlaying) {
             [_playerViewController.player play];
         }
     }
