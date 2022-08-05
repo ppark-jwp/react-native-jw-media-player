@@ -538,8 +538,8 @@
     id ads = config[@"advertising"];
     if (ads != nil && (ads != (id)[NSNull null])) {
         JWAdvertisingConfig* advertising;
-        JWAdsAdvertisingConfigBuilder* adConfigBuilder = [[JWAdsAdvertisingConfigBuilder alloc] init];
-                 
+        JWImaAdvertisingConfigBuilder* adConfigBuilder = [[JWImaAdvertisingConfigBuilder alloc] init];
+
          id adClient = ads[@"adClient"];
          if ((adClient != nil) && (adClient != (id)[NSNull null])) {
              int clientType = (int)[RCTConvert JWAdClient:adClient];
@@ -567,60 +567,60 @@
          } else {
 
          }
-        
+
         // [adConfigBuilder adRules:(JWAdRules * _Nonnull)];
-        
+
         id schedule = ads[@"adSchedule"];
         if(schedule != nil && (schedule != (id)[NSNull null])) {
             NSArray* scheduleAr = (NSArray*)schedule;
             if (scheduleAr.count > 0) {
                 NSMutableArray <JWAdBreak*>* scheduleArray = [[NSMutableArray alloc] init];
-                
+
                 for (id item in scheduleAr) {
                     NSString *offsetString = [item objectForKey:@"offset"];
                     NSString *tag = [item objectForKey:@"tag"];
                     NSURL* tagUrl = [NSURL URLWithString:tag];
-                    
+
                     JWAdBreakBuilder* adBreakBuilder = [[JWAdBreakBuilder alloc] init];
                     JWAdOffset* offset = [JWAdOffset fromString:offsetString];
-                    
+
                     [adBreakBuilder offset:offset];
                     [adBreakBuilder tags:@[tagUrl]];
-                    
+
                     JWAdBreak *adBreak = [adBreakBuilder buildAndReturnError:&error];
-                    
+
                     [scheduleArray addObject:adBreak];
                 }
-            
+
                 if (scheduleArray.count > 0) {
                     [adConfigBuilder schedule:scheduleArray];
                 }
             }
         }
-        
+
         id tag = ads[@"tag"];
         if (tag != nil && (tag != (id)[NSNull null])) {
             NSURL* tagUrl = [NSURL URLWithString:tag];
             [adConfigBuilder tag:tagUrl];
         }
-                
+
         id adVmap = ads[@"adVmap"];
         if (adVmap != nil && (adVmap != (id)[NSNull null])) {
             NSURL* adVmapUrl = [NSURL URLWithString:adVmap];
             [adConfigBuilder vmapURL:adVmapUrl];
         }
-        
+
         id openBrowserOnAdClick = ads[@"openBrowserOnAdClick"];
         if (openBrowserOnAdClick != nil && (openBrowserOnAdClick != (id)[NSNull null])) {
-            [adConfigBuilder openBrowserOnAdClick:openBrowserOnAdClick];
+            //[adConfigBuilder openBrowserOnAdClick:openBrowserOnAdClick];
         }
-        
+
         advertising = [adConfigBuilder buildAndReturnError:&error];
         [configBuilder advertising:advertising];
     }
-    
+
     JWPlayerConfiguration* playerConfig = [configBuilder buildAndReturnError:&error];
-    
+
     return playerConfig;
 }
 
