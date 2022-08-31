@@ -44,6 +44,7 @@ import com.jwplayer.pub.api.configuration.ads.VastAdvertisingConfig;
 import com.jwplayer.pub.api.configuration.ads.VmapAdvertisingConfig;
 import com.jwplayer.pub.api.configuration.ads.dai.ImaDaiAdvertisingConfig;
 import com.jwplayer.pub.api.configuration.ads.ima.ImaAdvertisingConfig;
+import com.jwplayer.pub.api.configuration.ads.ima.ImaVmapAdvertisingConfig;
 import com.jwplayer.pub.api.events.AdPauseEvent;
 import com.jwplayer.pub.api.events.AdPlayEvent;
 import com.jwplayer.pub.api.events.AudioTrackChangedEvent;
@@ -185,6 +186,9 @@ public class RNJWPlayerView extends RelativeLayout implements
     boolean playbackNowAuthorized = false;
     boolean userPaused = false;
     boolean wasInterrupted = false;
+
+    private static int sessionDepth = 0;
+    boolean isInBackground = false;
 
     private final ReactApplicationContext mAppContext;
 
@@ -698,9 +702,21 @@ public class RNJWPlayerView extends RelativeLayout implements
                 configBuilder.advertisingConfig(advertisingConfig);
             } else if (ads != null && ads.hasKey("adVmap")) {
                 String adVmap = ads.getString("adVmap");
-                advertisingConfig = new VmapAdvertisingConfig.Builder().tag(adVmap).build();
-
-                configBuilder.advertisingConfig(advertisingConfig);
+                if (ads.hasKey("adClient") &&
+                    ads.getString("adClient") != null && adVmap != null) {
+                      Integer clientType = CLIENT_TYPES.get(ads.getString("adClient"));
+                      switch (clientType) {
+                          case 1:
+                              client = AdClient.IMA;
+                              advertisingConfig = new ImaVmapAdvertisingConfig.Builder().tag(adVmap).build();
+                              break;
+                          default:
+                              client = AdClient.VAST;
+                              advertisingConfig = new VmapAdvertisingConfig.Builder().tag(adVmap).build();
+                              break;
+                      }
+                      configBuilder.advertisingConfig(advertisingConfig);
+                }
             }
         }
 
@@ -735,7 +751,7 @@ public class RNJWPlayerView extends RelativeLayout implements
         this.destroyPlayer();
 
         mPlayerView = new RNJWPlayer(simpleContext);
-        
+
         mPlayerView.setFocusable(true);
         mPlayerView.setFocusableInTouchMode(true);
 
@@ -965,7 +981,7 @@ public class RNJWPlayerView extends RelativeLayout implements
 
     private void updateWakeLock(boolean enable) {
         if (mWindow != null) {
-            if (enable) {
+            if (enable && !isInBackground) {
                 mWindow.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             } else {
                 mWindow.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -974,7 +990,7 @@ public class RNJWPlayerView extends RelativeLayout implements
     }
 
     // AdEvents
-    
+
     @Override
     public void onAdPause(AdPauseEvent adPauseEvent) {
         WritableMap event = Arguments.createMap();
@@ -1001,6 +1017,10 @@ public class RNJWPlayerView extends RelativeLayout implements
 
     @Override
     public void onBeforePlay(BeforePlayEvent beforePlayEvent) {
+        if (backgroundAudioEnabled) {
+            doBindService();
+        }
+
         WritableMap event = Arguments.createMap();
         event.putString("message", "onBeforePlay");
         getReactContext().getJSModule(RCTEventEmitter.class).receiveEvent(getId(), "topBeforePlay", event);
@@ -1148,6 +1168,10 @@ public class RNJWPlayerView extends RelativeLayout implements
 
     @Override
     public void onPlaylistItem(PlaylistItemEvent playlistItemEvent) {
+        if (backgroundAudioEnabled) {
+            doBindService();
+        }
+
         currentPlayingIndex = playlistItemEvent.getIndex();
 
         WritableMap event = Arguments.createMap();
@@ -1240,23 +1264,30 @@ public class RNJWPlayerView extends RelativeLayout implements
     @Override
     public void onCast(CastEvent castEvent) {
         WritableMap event = Arguments.createMap();
-        event.putString("message", "onCast");
+        event.putString("message", "onCasting");
         event.putString("device", castEvent.getDeviceName());
         event.putBoolean("active", castEvent.isActive());
         event.putBoolean("available", castEvent.isAvailable());
-        getReactContext().getJSModule(RCTEventEmitter.class).receiveEvent(getId(), "onCast", event);
+        getReactContext().getJSModule(RCTEventEmitter.class).receiveEvent(getId(), "onCasting", event);
     }
 
     // LifecycleEventListener
 
     @Override
     public void onHostResume() {
-
+        sessionDepth++;
+        if(sessionDepth == 1){
+            isInBackground = false;
+        }
     }
 
     @Override
     public void onHostPause() {
-
+        if (sessionDepth > 0)
+            sessionDepth--;
+        if (sessionDepth == 0) {
+            isInBackground = true;
+        }
     }
 
     @Override
@@ -1286,5 +1317,3 @@ public class RNJWPlayerView extends RelativeLayout implements
             .put("audiotracks_submenu", UiGroup.SETTINGS_AUDIOTRACKS_SUBMENU)
             .put("casting_menu", UiGroup.CASTING_MENU).build();
 }
-
-
