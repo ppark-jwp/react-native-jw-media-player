@@ -18,6 +18,7 @@
 @property(nonatomic, strong)JWPlayerView *playerView;
 
 @property(nonatomic, strong)AVAudioSession *audioSession;
+@property(nonatomic, strong)AVPictureInPictureController *pipController;
 
 @property(nonatomic)BOOL pipEnabled;
 @property(nonatomic)BOOL backgroundAudioEnabled;

@@ -36,9 +36,7 @@
 -(void)reset
 {
     @try {
-
 //        [[NSNotificationCenter defaultCenter] removeObserver:self];
-        
 
         [[NSNotificationCenter defaultCenter] removeObserver:self name:AVAudioSessionMediaServicesWereResetNotification object:_audioSession];
         [[NSNotificationCenter defaultCenter] removeObserver:self name:AVAudioSessionInterruptionNotification object:_audioSession];
@@ -117,7 +115,6 @@
 
     _backgroundAudioEnabled = [config[@"backgroundAudioEnabled"] boolValue];
     _pipEnabled = [config[@"pipEnabled"] boolValue];
-
     if (_backgroundAudioEnabled || _pipEnabled) {
         id category = config[@"category"];
         id categoryOptions = config[@"categoryOptions"];
@@ -615,12 +612,15 @@
 
         id openBrowserOnAdClick = ads[@"openBrowserOnAdClick"];
         if (openBrowserOnAdClick != nil && (openBrowserOnAdClick != (id)[NSNull null])) {
-            //[adConfigBuilder openBrowserOnAdClick:openBrowserOnAdClick];
+            // openBrowserOnAdClick not supported by IMA SDK client
+            // [adConfigBuilder openBrowserOnAdClick:openBrowserOnAdClick];
         }
 
         advertising = [adConfigBuilder buildAndReturnError:&error];
         [configBuilder advertising:advertising];
     }
+
+
 
     JWPlayerConfiguration* playerConfig = [configBuilder buildAndReturnError:&error];
 
@@ -706,16 +706,16 @@
         [_playerViewController.player pause]; // hack for stop not always stopping on unmount
         [_playerViewController.player stop];
         _playerViewController.enableLockScreenControls = NO;
-        
+
         // hack for stop not always stopping on unmount
         JWPlayerConfigurationBuilder *configBuilder = [[JWPlayerConfigurationBuilder alloc] init];
         [configBuilder playlist:@[]];
         NSError* error = nil;
         [_playerViewController.player configurePlayerWith:[configBuilder buildAndReturnError:&error]];
-        
+
         [_playerViewController removeDelegates];
         _playerViewController.parentView = nil;
-        
+
         [_playerViewController.view removeFromSuperview];
         [_playerViewController removeFromParentViewController];
         [_playerViewController willMoveToParentViewController:nil];
@@ -763,14 +763,22 @@
     [_playerView.player configurePlayerWith:playerConfig];
 
     if (_pipEnabled) {
-        AVPictureInPictureController* pipController = _playerView.pictureInPictureController;
-        pipController.delegate = self;
+       NSLog(@"pictureInPictureController initialized");
+        _pipController = _playerView.pictureInPictureController;
+        _pipController.delegate = self;
 
-        [pipController addObserver:self forKeyPath:@"isPictureInPicturePossible" options:NSKeyValueObservingOptionNew|NSKeyValueObservingOptionInitial context:NULL];
+        [_pipController addObserver:self forKeyPath:@"isPictureInPicturePossible" options:NSKeyValueObservingOptionNew|NSKeyValueObservingOptionInitial context:NULL];
+        _pipController.canStartPictureInPictureAutomaticallyFromInline = true;
+    }
+    // adding caption bottom margin
+    id margin = config[@"captionBottomMargin"];
+    if (margin != nil && (margin != (id)[NSNull null])) {
+        UIEdgeInsets inset = UIEdgeInsetsMake(0, 0, [margin floatValue], 0);
+        _playerView.captionInsets = inset;
     }
 
     [self addSubview:self.playerView];
-    
+
     id autostart = config[@"autostart"];
     if ([autostart boolValue]) {
         [_playerView.player play];
@@ -963,37 +971,56 @@
 #pragma mark - DRM Delegate
 
 - (void)contentIdentifierForURL:(NSURL * _Nonnull)url completionHandler:(void (^ _Nonnull)(NSData * _Nullable))handler {
-    if (!_contentUUID) {
-        _contentUUID = [[url.absoluteString componentsSeparatedByString:@";"] lastObject];
-    }
-
-    NSData *uuidData = [_contentUUID dataUsingEncoding:NSUTF8StringEncoding];
-    handler(uuidData);
+    // Handling uuid for Verimatrix DRM. Extracting the uuid from the HLS manifest by removing sdk://
+    NSString *uuid = [url.absoluteString stringByReplacingOccurrencesOfString:@"skd://" withString:@""];
+    handler([uuid dataUsingEncoding:NSUTF8StringEncoding]);
 }
 
 - (void)appIdentifierForURL:(NSURL * _Nonnull)url completionHandler:(void (^ _Nonnull)(NSData * _Nullable))handler {
+    // Getting the Fairplay certificate
     NSURL *certURL = [NSURL URLWithString:_fairplayCertUrl];
     NSData *certData = [NSData dataWithContentsOfURL:certURL];
+    //NSData *certData = nil;
     handler(certData);
 }
 
 - (void)contentKeyWithSPCData:(NSData * _Nonnull)spcData completionHandler:(void (^ _Nonnull)(NSData * _Nullable, NSDate * _Nullable, NSString * _Nullable))handler {
-    NSTimeInterval currentTime = [[NSDate date] timeIntervalSince1970];
-    NSString *spcProcessURL = [NSString stringWithFormat:@"%@/%@?p1=%li", _processSpcUrl, _contentUUID, (NSInteger)currentTime];
-    NSMutableURLRequest *ckcRequest = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:spcProcessURL]];
-    [ckcRequest setHTTPMethod:@"POST"];
-    [ckcRequest setHTTPBody:spcData];
-    [ckcRequest addValue:@"application/octet-stream" forHTTPHeaderField:@"Content-Type"];
+  // Verimatrix license request Handling
+  // SPC -> base64 encode -> URI endode -> add 'spc=' -> UTF 8 encode as NSData with the content-type "w-xxx-form-urlencoded"
 
-    [[[NSURLSession sharedSession] dataTaskWithRequest:ckcRequest completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
-        NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
-        if (error != nil || (httpResponse != nil && !NSLocationInRange(httpResponse.statusCode , NSMakeRange(200, (299 - 200))))) {
-            handler(nil, nil, nil);
-            return;
-        }
+  NSMutableURLRequest *ckcRequest = [[NSMutableURLRequest alloc] init];
+  [ckcRequest setURL:[NSURL URLWithString: _processSpcUrl]];
 
-        handler(data, nil, nil);
-    }] resume];
+  //URI encode
+  NSString* base64encodedString = [spcData base64EncodedStringWithOptions:0];
+  NSCharacterSet *URLBase64CharacterSet = [[NSCharacterSet characterSetWithCharactersInString:@";,/?:@&=+$"] invertedSet];
+  base64encodedString = [base64encodedString stringByAddingPercentEncodingWithAllowedCharacters:URLBase64CharacterSet];
+
+  NSString *requestDataString = [NSString stringWithFormat:@"spc=%@", base64encodedString];
+
+  [ckcRequest setHTTPMethod:@"POST"];
+  [ckcRequest setHTTPBody:[requestDataString dataUsingEncoding:NSUTF8StringEncoding]];
+  [ckcRequest setValue:@"application/x-www-form-urlencoded" forHTTPHeaderField:@"Content-Type"];
+
+  // Fairplay license request
+  [[[NSURLSession sharedSession] dataTaskWithRequest:ckcRequest completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+  NSError * jsonError;
+  NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
+
+  if (error != nil || (httpResponse != nil && httpResponse.statusCode != 200)) {
+    NSLog(@"fairplay licenceRequest extract CKC from data response : %@", response);
+    NSLog(@"fairplay licenceRequest ERROR : %@", error);
+    handler(nil, nil, nil);
+    return;
+  }
+
+  // Extract CKC from the response : {"ckc":"value.."} -> get the value(base64 encoded) -> send it to the DRM handler as NSData
+  NSDictionary *jsonObject = (NSDictionary *)[NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingAllowFragments error: &jsonError];
+  //SLog(@"fairplay Item ckc: %@", jsonObject[@"ckc"]);
+  NSString *ckcString = jsonObject[@"ckc"];
+  NSData *base64CkcData = [[NSData alloc] initWithBase64EncodedString:ckcString options:0];
+  handler(base64CkcData, nil, @"application/octet-stream");
+  }] resume];
 }
 
 #pragma mark - AV Picture In Picture Delegate
