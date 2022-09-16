@@ -755,6 +755,7 @@
         pipController.delegate = self;
 
         [pipController addObserver:self forKeyPath:@"isPictureInPicturePossible" options:NSKeyValueObservingOptionNew|NSKeyValueObservingOptionInitial context:NULL];
+        pipController.canStartPictureInPictureAutomaticallyFromInline = true;
     }
 
     [self addSubview:self.playerView];
