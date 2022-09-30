@@ -435,12 +435,8 @@ export default class JWPlayer extends Component {
         var audioTracks = await RNJWPlayerManager.getAudioTracks(
           this.getRNJWPlayerBridgeHandle()
         );
-        // iOS sends autoSelect as 0 or 1 instead of a boolean
-        // couldn't figure out how to send autoSelect as a boolean from Objective C
-        return audioTracks.map((audioTrack) => {
-          audioTrack.autoSelect = !!audioTrack.autoSelect;
-          return audioTrack;
-        });
+        return audioTracks;
+
       } catch (e) {
         console.error(e);
         return null;
