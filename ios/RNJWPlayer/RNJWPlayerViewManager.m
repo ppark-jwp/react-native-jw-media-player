@@ -406,18 +406,21 @@ RCT_REMAP_METHOD(getAudioTracks,
             }
 
             if (audioTracks) {
-                NSMutableArray *results = [[NSMutableArray alloc] init];
-                for (int i = 0; i < audioTracks.count; i++) {
-                    NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
-                    id audioTrack = [audioTracks objectAtIndex:i];
-                    [dict setObject:audioTrack[@"language"] forKey:@"language"];
-                    [dict setObject:audioTrack[@"autoselect"] forKey:@"autoSelect"];
-                    [dict setObject:audioTrack[@"defaulttrack"] forKey:@"defaultTrack"];
-                    [dict setObject:audioTrack[@"name"] forKey:@"name"];
-                    [dict setObject:audioTrack[@"groupid"] forKey:@"groupId"];
-                    [results addObject:dict];
-                }
-                resolve(results);
+              NSMutableArray *results = [[NSMutableArray alloc] init];
+              for (JWMediaSelectionOption *audioTrack in audioTracks) {
+                  NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
+
+                  [dict setObject:audioTrack.name forKey:@"name"];
+                  [dict setObject:audioTrack.extendedLanguageTag forKey:@"language"];
+                  if (audioTrack.defaultOption) {
+                      [dict setObject:@YES forKey:@"default"];
+                  } else {
+                      [dict setObject:@NO forKey:@"default"];
+                  }
+                  [results addObject:dict];
+              }
+              resolve(results);
+
             } else {
                 NSError *error = [[NSError alloc] init];
                 reject(@"no_audio_tracks", @"There are no audio tracks.", error);
