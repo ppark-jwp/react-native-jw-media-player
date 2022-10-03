@@ -554,16 +554,23 @@ public class RNJWPlayerView extends RelativeLayout implements
                     adSchedule.add(adBreak);
                 }
             }
-
             itemBuilder.adSchedule(adSchedule);
         }
 
+        //One31 fix - handling adVmap tag in each playlistitem only one tag is allowed
+        if (playlistItem.hasKey("adVmap")) {
+            ArrayList<AdBreak> adSchedule = new ArrayList<>();
+            String vmapTag = playlistItem.getString("adVmap");
+            Log.d(TAG,vmapTag);
+            AdBreak adBreak = new AdBreak.Builder().tag(vmapTag).build();
+            adSchedule.add(adBreak);
+            itemBuilder.adSchedule(adSchedule);
+        }
         String recommendations;
         if (playlistItem.hasKey("recommendations")) {
             recommendations = playlistItem.getString("recommendations");
             itemBuilder.recommendations(recommendations);
         }
-
         return itemBuilder.build();
     }
 
@@ -648,6 +655,37 @@ public class RNJWPlayerView extends RelativeLayout implements
 
         if (prop.hasKey("advertising")) {
             ReadableMap ads = prop.getMap("advertising");
+
+            // One31 fix : read adClient prop and set IMA SDK if adclient is IMA
+            if (ads.hasKey("adClient") &&
+                    ads.getString("adClient") != null &&
+                    CLIENT_TYPES.get(ads.getString("adClient")) != null) {
+                Integer clientType = CLIENT_TYPES.get(ads.getString("adClient"));
+                switch (clientType) {
+                    case 1:
+                        client = AdClient.IMA;
+                        advertisingConfig = new ImaAdvertisingConfig.Builder().build();
+                        break;
+                    case 2:
+                        client = AdClient.IMA_DAI;
+                        advertisingConfig = new ImaDaiAdvertisingConfig.Builder().build();
+                        break;
+                    default:
+                        client = AdClient.VAST;
+                        advertisingConfig = new VastAdvertisingConfig.Builder()
+                                .schedule(adScheduleList)
+                                .build();
+                        break;
+                }
+                configBuilder.advertisingConfig(advertisingConfig);
+            } else {
+                client = AdClient.VAST;
+                advertisingConfig = new VastAdvertisingConfig.Builder()
+                        .schedule(adScheduleList)
+                        .build();
+                configBuilder.advertisingConfig(advertisingConfig);
+            }
+
             if (ads != null && ads.hasKey("adSchedule")) {
                 ReadableMap adSchedule = ads.getMap("adSchedule");
                 if (adSchedule.hasKey("tag") && adSchedule.hasKey("offset")) {
@@ -669,34 +707,8 @@ public class RNJWPlayerView extends RelativeLayout implements
                     adScheduleList.add(adBreak);
                 }
 
-                if (ads.hasKey("adClient") &&
-                        ads.getString("adClient") != null &&
-                        CLIENT_TYPES.get(ads.getString("adClient")) != null) {
-                    Integer clientType = CLIENT_TYPES.get(ads.getString("adClient"));
-                    switch (clientType) {
-                        case 1:
-                            client = AdClient.IMA;
-                            advertisingConfig = new ImaAdvertisingConfig.Builder().schedule(adScheduleList).build();
-                            break;
-                        case 2:
-                            client = AdClient.IMA_DAI;
-                            advertisingConfig = new ImaDaiAdvertisingConfig.Builder().build();
-                            break;
-                        default:
-                            client = AdClient.VAST;
-                            advertisingConfig = new VastAdvertisingConfig.Builder()
-                                    .schedule(adScheduleList)
-                                    .build();
-                            break;
-                    }
-                } else {
-                    client = AdClient.VAST;
-                    advertisingConfig = new VastAdvertisingConfig.Builder()
-                            .schedule(adScheduleList)
-                            .build();
-                }
-
                 configBuilder.advertisingConfig(advertisingConfig);
+
             } else if (ads != null && ads.hasKey("adVmap")) {
                 String adVmap = ads.getString("adVmap");
                 if (ads.hasKey("adClient") &&
