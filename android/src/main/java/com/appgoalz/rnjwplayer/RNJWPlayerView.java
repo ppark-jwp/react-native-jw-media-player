@@ -261,7 +261,10 @@ public class RNJWPlayerView extends RelativeLayout implements
 
     public void destroyPlayer() {
         if (mPlayer != null) {
+            Log.d(TAG, "destroyPlayer start");
+
             mPlayer.stop();
+            Log.d(TAG, "destroyPlayer stop");
 
             mPlayer.removeListeners(this,
                     // VideoPlayerEvents
@@ -298,11 +301,13 @@ public class RNJWPlayerView extends RelativeLayout implements
                     EventType.PIP_CLOSE,
                     EventType.PIP_OPEN
             );
+            Log.d(TAG, "destroyPlayer removeListeners");
 
             mPlayer  = null;
             mPlayerView = null;
 
             getReactContext().removeLifecycleEventListener(this);
+            Log.d(TAG, "destroyPlayer removeLifecycleEventListener");
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 if (audioManager != null && focusRequest != null) {
@@ -313,10 +318,12 @@ public class RNJWPlayerView extends RelativeLayout implements
                     audioManager.abandonAudioFocus(this);
                 }
             }
+            Log.d(TAG, "destroyPlayer abandonAudioFocus");
 
             audioManager = null;
 
             doUnbindService();
+            Log.d(TAG, "destroyPlayer end");
         }
     }
 
