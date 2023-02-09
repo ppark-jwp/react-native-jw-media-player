@@ -261,6 +261,11 @@ public class RNJWPlayerView extends RelativeLayout implements
 
     public void destroyPlayer() {
         if (mPlayer != null) {
+            
+            //one31 workaround for audio background issue - muting the player and skipping the ad if possible when the player is destoyed.
+            mPlayer.skipAd();
+            setVolume(0);
+            
             mPlayer.stop();
 
             mPlayer.removeListeners(this,
