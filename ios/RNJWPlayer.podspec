@@ -11,7 +11,8 @@ Pod::Spec.new do |s|
   s.homepage     = package['homepage']
   s.platform     = :ios, "10.0"
   s.source       = { :git => "https://github.com/chaimPaneth/react-native-jw-media-player.git", :tag => "v#{s.version}" }
-  s.source_files  = "RNJWPlayer/*.{h,m}"
+  # s.source_files  = "RNJWPlayer/*.{h,m}" - updates from v0.2.27
+  s.source_files  = "ios/RNJWPlayer/*.{h,m}"
   s.dependency   'JWPlayerKit', '~> 4.9.1'
   s.dependency   'GoogleAds-IMA-iOS-SDK', '~> 3.14.3'
   s.dependency   'google-cast-sdk', '~> 4.7.0'
